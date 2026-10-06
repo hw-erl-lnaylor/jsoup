@@ -3,6 +3,8 @@ jsoup.iml
 jsoup.ipr
 jsoup.iws
 target/
+.gradle/
+build/
 .classpath
 .project
 .settings/
