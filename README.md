@@ -86,3 +86,16 @@ If you use jsoup in research or technical documentation, you can cite it as:
   url = {https://jsoup.org}
 }
 ```
+
+## Command line
+
+The jsoup JAR is also directly executable. It provides a thin wrapper around parsing, CSS selection, serialization, and cleaning APIs:
+
+```sh
+java -jar jsoup.jar select 'a[href]' page.html --attr href
+java -jar jsoup.jar get https://example.com --select h1 --text
+java -jar jsoup.jar clean input.html --safelist basic
+java -jar jsoup.jar format input.xml --xml
+```
+
+Run `java -jar jsoup.jar --help` for the complete usage. Inputs may be files, standard input (`-`, or omitted), or URLs for `select` and `format`.

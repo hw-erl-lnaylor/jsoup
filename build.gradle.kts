@@ -79,6 +79,7 @@ tasks.jar {
             "Multi-Release" to "true",
             "Implementation-Title" to project.description,
             "Implementation-Version" to project.version,
+            "Main-Class" to "org.jsoup.cli.Main",
         )
     }
 }
