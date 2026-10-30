@@ -4,7 +4,8 @@ import java.net.HttpURLConnection;
 import java.net.http.HttpClient;
 
 /**
- A per-request authentication shim, used in Java 9+.
+ Sets a per-request authenticator on the {@link java.net.HttpURLConnection} or {@link java.net.http.HttpClient}
+ that executes the request.
  */
 class RequestAuthHandler implements AuthenticationHandler.AuthShim {
     public RequestAuthHandler() {}

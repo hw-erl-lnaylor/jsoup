@@ -74,7 +74,7 @@ public class HttpConnection implements Connection {
 
     private HttpConnection.Request req;
     private Connection.@Nullable Response res;
-    volatile @Nullable Object clientState; // Java 11 HttpClient state, held as Object for Java 8 compatibility
+    volatile @Nullable Object clientState; // cached HttpClient state for this connection
 
     /**
      Create a new Connection, with the request URL specified.

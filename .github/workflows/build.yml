@@ -9,8 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-        # choosing to run a reduced set of LTS, current, and next, to balance coverage and execution time
-        java: [8, 17, 25]
+        java: [21]
       fail-fast: false
     name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
     steps:
@@ -22,11 +21,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
           distribution: 'zulu'
-          cache: 'maven'
+          cache: 'gradle'
 
-      - name: Maven Compile
-        run: mvn -X compile -B --file pom.xml
-
-      - name: Maven Verify
-        run: mvn -X verify -B --file pom.xml
-...
+      - name: Gradle check
+        run: ./gradlew check --no-daemon

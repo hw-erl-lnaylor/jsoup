@@ -1,5 +1,10 @@
 # jsoup Changelog
 
+## Unreleased
+
+### Build Changes
+* Require Java 21. The Java 8 class files and the Java 11 multi-release overlay (`META-INF/versions/11`) are gone. `HttpClient` and per-request authenticators are compiled into the main jar, and the Gradle build compiles and tests with `--release 21`.
+
 ## 1.23.2 (2026-Aug-26)
 
 ### Improvements

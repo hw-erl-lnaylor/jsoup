@@ -28,7 +28,7 @@ import static org.jsoup.helper.HttpConnection.Response;
 import static org.jsoup.helper.HttpConnection.Response.writePost;
 
 /**
- Executes requests using the HttpClient, for http/2 support. Enabled by default when available. To disable, set
+ Executes requests using the HttpClient, for HTTP/2 support. Enabled by default. To disable, set
  property {@code jsoup.useHttpClient} to {@code false}.
  */
 class HttpClientExecutor extends RequestExecutor {

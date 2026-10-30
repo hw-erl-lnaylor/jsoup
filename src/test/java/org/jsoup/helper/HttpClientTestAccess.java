@@ -11,11 +11,7 @@ import java.net.URL;
 import java.net.http.HttpRequest;
 
 /**
- Test access shim for the Java 11 multi-release classes.
- <p>These tests need to exercise the Java 11 implementation as loaded from
- {@code META-INF/versions/11}. Using reflection here keeps them bound to that
- packaged implementation, without adding the Java 11 sources to the test
- compile path.</p>
+ Reflective access to package-private {@code HttpClientExecutor} details used by tests.
  */
 final class HttpClientTestAccess {
     private static final String ExecutorClassName = "org.jsoup.helper.HttpClientExecutor";
