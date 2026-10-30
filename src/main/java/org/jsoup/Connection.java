@@ -12,7 +12,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.net.Authenticator;
 import java.net.CookieStore;
 import java.net.Proxy;
 import java.net.URL;
@@ -40,7 +39,7 @@ import java.util.Map;
 #execute()}, {@link #get()}, or {@link #post()}), and the server's response consumed.</p>
  <p>For multi-threaded implementations, it is important to use a {@link #newRequest()} for each request. The session may
  be shared across concurrent threads, but a not a specific request.</p>
- <p><b>HTTP/2</b> support: On JVM 11 and above, requests use {@link java.net.http.HttpClient}, which supports
+ <p><b>HTTP/2</b> support: requests use {@link java.net.http.HttpClient}, which supports
  HTTP/2. To use the legacy {@link java.net.HttpURLConnection} instead, set
  <code>System.setProperty("jsoup.useHttpClient", "false")</code>.</p>
  */
@@ -151,7 +150,7 @@ public interface Connection {
      <p>The default timeout is <b>30 seconds</b> (30,000 millis). A timeout of zero is treated as an infinite timeout.</p>
      <p>This timeout specifies the combined maximum duration of the connection time and the time to read
      the full response.</p>
-     <p>Implementation note: when this <code>Connection</code> is backed by <code>HttpURLConnection</code> (rather than <code>HttpClient</code>, as used in JVM 11+), this timeout is implemented by setting both the socket connect and read timeouts to half of the specified value.</p>
+     <p>Implementation note: when this <code>Connection</code> is backed by <code>HttpURLConnection</code> (rather than <code>HttpClient</code>), this timeout is implemented by setting both the socket connect and read timeouts to half of the specified value.</p>
 
      @param millis number of milliseconds (thousandths of a second) before timing out connects or reads.
      @return this Connection, for chaining
@@ -442,11 +441,7 @@ public interface Connection {
      <p>The system may cache the authentication and use it for subsequent requests to the same resource.</p>
 
      <p><b>Implementation notes</b></p>
-     <p>For compatibility, on a Java 8 platform, authentication is set up via the system-wide default
-     {@link java.net.Authenticator#setDefault(Authenticator)} method via a ThreadLocal delegator. Whilst the
-     authenticator used is request specific and thread-safe, if you have other calls to {@code setDefault}, they will be
-     incompatible with this implementation.</p>
-     <p>On Java 9 and above, the preceding note does not apply; authenticators are directly set on the request. </p>
+     <p>Authenticators are set on the request. They are not installed as the platform's default authenticator.</p>
      <p>If you are attempting to authenticate to a proxy that uses the {@code basic} scheme and will be fetching HTTPS
      URLs, you need to configure your Java platform to enable that, by setting the
      {@code jdk.http.auth.tunneling.disabledSchemes} system property to {@code ""}.

@@ -2,8 +2,6 @@ package org.jsoup.helper;
 
 import org.jsoup.internal.SharedConstants;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -68,24 +66,17 @@ public class Regex {
     static boolean hasRe2j() {
         try {
             Class<?> re2 = Class.forName("com.google.re2j.Pattern", false, Regex.class.getClassLoader()); // check if re2j is in classpath
-            try {
-                // if it is, and we are on JVM9+, we need to dork around with modules, because re2j doesn't publish a module name.
-                // done via reflection so we can still run on JVM 8.
-                // todo remove if re2j publishes as a module
-                Class<?> moduleCls = Class.forName("java.lang.Module");
-                Method getModule = Class.class.getMethod("getModule");
-                Object jsoupMod = getModule.invoke(Regex.class);
-                Object re2Mod = getModule.invoke(re2);
-                boolean reads = (boolean) moduleCls.getMethod("canRead", moduleCls).invoke(jsoupMod, re2Mod);
-                if (!reads) moduleCls.getMethod("addReads", moduleCls).invoke(jsoupMod, re2Mod);
-            } catch (ClassNotFoundException ignore) {
-                // jvm8 - no Module class; so we can use as-is
-            }
+            // re2j does not publish a module name, so read its module when both are on the module path.
+            // todo remove if re2j publishes as a module
+            Module jsoupMod = Regex.class.getModule();
+            Module re2Mod = re2.getModule();
+            if (!jsoupMod.canRead(re2Mod))
+                jsoupMod.addReads(re2Mod);
             return true;
         } catch (ClassNotFoundException e) {
             return false; // no re2j
-        } catch (ReflectiveOperationException e) {
-            // unexpectedly couldn’t wire modules on 9+; return false to avoid IllegalAccessError later
+        } catch (RuntimeException e) {
+            // unexpectedly couldn’t wire modules; return false to avoid IllegalAccessError later
             System.err.println("Warning: (bug? please report) couldn't access re2j from jsoup due to modules: " + e);
             return false;
         }

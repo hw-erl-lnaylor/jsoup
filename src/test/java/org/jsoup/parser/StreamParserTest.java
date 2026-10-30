@@ -19,7 +19,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -551,9 +550,7 @@ class StreamParserTest {
     @Test void canParseFileReader() throws IOException {
         File file = ParseTest.getFile("/htmltests/large.html");
 
-        // can't use FileReader from Java 11 here
-        InputStreamReader input = new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8);
-        BufferedReader reader = new BufferedReader(input);
+        BufferedReader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8);
         StreamParser streamer = new StreamParser(Parser.htmlParser()).parse(reader, file.getAbsolutePath());
 
         Element last = null, e;

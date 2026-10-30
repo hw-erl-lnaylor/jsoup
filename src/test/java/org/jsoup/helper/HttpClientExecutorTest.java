@@ -37,10 +37,10 @@ public class HttpClientExecutorTest {
         disableHttpClient();
     }
 
-    @Test void loadsMultiReleaseHttpClientExecutor() {
-        // sanity check that the test is resolving the packaged Java 11 override, not a copy on the test classpath
+    @Test void loadsHttpClientExecutorFromMainClasses() {
         String resource = HttpClientTestAccess.executorClassResource().toExternalForm();
-        assertTrue(resource.contains("/META-INF/versions/11/"), resource);
+        assertFalse(resource.contains("/META-INF/versions/"), resource);
+        assertTrue(resource.endsWith("org/jsoup/helper/HttpClientExecutor.class"), resource);
     }
 
     @Test void getsHttpClient() {
@@ -153,7 +153,7 @@ public class HttpClientExecutorTest {
         HttpConnection.Request request = new HttpConnection.Request();
         request.proxy(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("localhost", 1080)));
 
-        // SOCKS handling only matters on the Java 11+ path where HttpClient would otherwise be selected (and just bypasses)
+        // HttpClient does not support SOCKS proxies, so those requests use HttpURLConnection
         RequestExecutor executor = RequestDispatch.get(request, null);
         assertInstanceOf(UrlConnectionExecutor.class, executor);
     }

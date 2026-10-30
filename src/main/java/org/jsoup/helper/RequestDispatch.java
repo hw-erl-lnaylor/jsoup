@@ -7,46 +7,27 @@ import static org.jsoup.helper.HttpConnection.Request;
 import static org.jsoup.helper.HttpConnection.Response;
 
 import java.net.Proxy;
-import java.lang.reflect.Constructor;
 
 /**
- Handles requests using either HttpClient (available in JVM 11+) or HttpURLConnection. During initialization, the
- HttpClientExecutor class is used if it can be instantiated, unless the system property
- {@link SharedConstants#UseHttpClient} is explicitly set to {@code false}.
+ Handles requests using {@link java.net.http.HttpClient}, unless the system property
+ {@link SharedConstants#UseHttpClient} is set to {@code false}, or the request needs a transport HttpClient does not
+ support. Those requests use {@link java.net.HttpURLConnection}.
  */
 class RequestDispatch {
 
-    @Nullable
-    static Constructor<? extends RequestExecutor> clientConstructor;
-
-    static {
-        try {
-            Class<? extends RequestExecutor> httpClass =
-                Class.forName("org.jsoup.helper.HttpClientExecutor").asSubclass(RequestExecutor.class);
-            clientConstructor = httpClass.getConstructor(Request.class, Response.class);
-        } catch (Exception ignored) {
-            // either not on Java11+, or on Android; will provide UrlConnectionExecutor
-        }
-
+    static RequestExecutor get(Request request, @Nullable Response previousResponse) {
+        if (useHttpClient(request))
+            return new HttpClientExecutor(request, previousResponse);
+        return new UrlConnectionExecutor(request, previousResponse);
     }
 
-    static RequestExecutor get(Request request, @Nullable Response previousResponse) {
-        boolean useHttpClient = Boolean.parseBoolean(System.getProperty(SharedConstants.UseHttpClient, "true"));
-
-        if (request.sslSocketFactory() != null) // downgrade if a socket factory is set, as it can't be supplied to the HttpClient
-            useHttpClient = false;
+    private static boolean useHttpClient(Request request) {
+        if (!Boolean.parseBoolean(System.getProperty(SharedConstants.UseHttpClient, "true")))
+            return false;
+        if (request.sslSocketFactory() != null) // cannot be supplied to HttpClient
+            return false;
         Proxy proxy = request.proxy();
-        if (proxy != null && proxy.type() == Proxy.Type.SOCKS) // HttpClient doesn't support SOCKS proxies
-            useHttpClient = false;
-
-        if (useHttpClient && clientConstructor != null) {
-            try {
-                return clientConstructor.newInstance(request, previousResponse);
-            } catch (Exception e) {
-                return new UrlConnectionExecutor(request, previousResponse);
-            }
-        } else {
-            return new UrlConnectionExecutor(request, previousResponse);
-        }
+        // HttpClient does not support SOCKS proxies
+        return proxy == null || proxy.type() != Proxy.Type.SOCKS;
     }
 }

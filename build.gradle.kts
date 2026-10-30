@@ -10,20 +10,15 @@ repositories {
     mavenCentral()
 }
 
-// Multi-release overlay: compiled for Java 11 and packaged under META-INF/versions/11.
-// The Java 8 base loads these classes reflectively when they are available.
-val java11: SourceSet by sourceSets.creating {
-    java.setSrcDirs(listOf("src/main/java11"))
-    java.destinationDirectory = layout.buildDirectory.dir("classes/java11/META-INF/versions/11")
-    resources.setSrcDirs(emptyList<String>())
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 dependencies {
     compileOnly("org.jspecify:jspecify:1.0.1")
     compileOnly("com.google.re2j:re2j:1.8")
-
-    "java11CompileOnly"("org.jspecify:jspecify:1.0.1")
-    "java11CompileOnly"(sourceSets.main.get().output)
 
     testImplementation(platform("org.junit:junit-bom:5.14.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -34,33 +29,18 @@ dependencies {
     testImplementation("io.netty:netty-handler")
     testImplementation("org.jspecify:jspecify:1.0.1")
     testImplementation("com.google.re2j:re2j:1.8")
-    testImplementation(java11.output)
-}
-
-sourceSets.test {
-    java.srcDir("src/test/java11")
 }
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
+    options.release = 21
+    options.compilerArgs.add("-Xlint:none")
 }
 
 tasks.compileJava {
-    options.release = 8
-    options.compilerArgs.addAll(listOf("-Xpkginfo:always", "-Xlint:none"))
-}
-
-tasks.named<JavaCompile>("compileJava11Java") {
-    options.release = 11
-    val baseClasses = sourceSets.main.get().output.classesDirs
-    options.compilerArgumentProviders.add(CommandLineArgumentProvider {
-        listOf("--patch-module", "org.jsoup=${baseClasses.asPath}")
-    })
-}
-
-tasks.compileTestJava {
-    options.release = 11
-    options.compilerArgs.add("-Xlint:none")
+    options.compilerArgs.add("-Xpkginfo:always")
+    // re2j is an optional, non-modular jar. Keep its types visible while compiling this module.
+    options.compilerArgs.addAll(listOf("--add-reads", "org.jsoup=ALL-UNNAMED"))
 }
 
 tasks.processResources {
@@ -71,12 +51,8 @@ tasks.processResources {
 
 tasks.jar {
     exclude("org/jsoup/examples/**")
-    into("META-INF/versions/11") {
-        from(java11.output)
-    }
     manifest {
         attributes(
-            "Multi-Release" to "true",
             "Implementation-Title" to project.description,
             "Implementation-Version" to project.version,
             "Main-Class" to "org.jsoup.cli.Main",

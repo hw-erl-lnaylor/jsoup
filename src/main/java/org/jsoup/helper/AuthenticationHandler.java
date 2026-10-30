@@ -2,31 +2,16 @@ package org.jsoup.helper;
 
 import org.jspecify.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 
 /**
- Handles per request Authenticator-based authentication. Loads the class `org.jsoup.helper.RequestAuthHandler` if
- per-request Authenticators are supported (Java 9+), or installs a system-wide Authenticator that delegates to a request
- ThreadLocal.
+ Handles per-request Authenticator-based authentication. The authenticator is set on the
+ {@link java.net.HttpURLConnection} or {@link java.net.http.HttpClient} that executes the request.
  */
 class AuthenticationHandler extends Authenticator {
     static final int MaxAttempts = 3; // max authentication attempts per request. allows for multiple auths (e.g. proxy and server) in one request, but saves otherwise 20 requests if credentials are incorrect.
-    static AuthShim handler;
-
-    static {
-        try {
-            Class<? extends AuthShim> perRequestClass =
-                Class.forName("org.jsoup.helper.RequestAuthHandler").asSubclass(AuthShim.class);
-            Constructor<? extends AuthShim> constructor = perRequestClass.getConstructor();
-            handler = constructor.newInstance();
-        } catch (ClassNotFoundException e) {
-            handler = new GlobalHandler();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
+    static final AuthShim handler = new RequestAuthHandler();
 
     @Nullable RequestAuthenticator auth;
     int attemptCount = 0;
@@ -38,7 +23,7 @@ class AuthenticationHandler extends Authenticator {
     }
 
     /**
-     Authentication callback, called by HttpURLConnection - either as system-wide default (Java 8) or per HttpURLConnection (Java 9+)
+     Authentication callback, called by the connection executing this request.
      * @return credentials, or null if not attempting to auth.
      */
     @Nullable @Override public final PasswordAuthentication getPasswordAuthentication() {
@@ -51,7 +36,7 @@ class AuthenticationHandler extends Authenticator {
         if (delegate.attemptCount > MaxAttempts)
             return null; // When using HttpClient, this will manifest as "No credentials provided" IOException; not ideal; would be clearer if we could then detach the authenticator which would bubble the 401, but there's no path for that
         if (delegate.auth == null)
-            return null; // detached - would have been the Global Authenticator (not a delegate)
+            return null; // detached
 
         RequestAuthenticator.Context ctx = new RequestAuthenticator.Context(
             this.getRequestingURL(), this.getRequestorType(), this.getRequestingPrompt());
@@ -64,27 +49,5 @@ class AuthenticationHandler extends Authenticator {
         void remove();
 
         @Nullable AuthenticationHandler get(AuthenticationHandler helper);
-    }
-
-    /**
-     On Java 8 we install a system-wide Authenticator, which pulls the delegating Auth from a ThreadLocal pool.
-     */
-    static class GlobalHandler implements AuthShim {
-        static ThreadLocal<AuthenticationHandler> authenticators = new ThreadLocal<>();
-        static {
-            Authenticator.setDefault(new AuthenticationHandler());
-        }
-
-        @Override public void enable(RequestAuthenticator auth, Object ignored) {
-            authenticators.set(new AuthenticationHandler(auth));
-        }
-
-        @Override public void remove() {
-            authenticators.remove();
-        }
-
-        @Override public AuthenticationHandler get(AuthenticationHandler helper) {
-            return authenticators.get();
-        }
     }
 }
