@@ -10,11 +10,13 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MainTest {
+    private static final String Nl = System.lineSeparator();
+
     @Test
     void selectsTextFromStandardInput() throws Exception {
         Result result = run("<p>One <b>two</b></p><p>Three</p>", "select", "p", "--text");
         assertEquals(0, result.status);
-        assertEquals("One two\nThree\n", result.out);
+        assertEquals("One two" + Nl + "Three" + Nl, result.out);
         assertEquals("", result.err);
     }
 
@@ -22,14 +24,14 @@ class MainTest {
     void selectsAnAttribute() throws Exception {
         Result result = run("<a href='/one'>One</a><a href='/two'>Two</a>", "select", "a", "--attr", "href");
         assertEquals(0, result.status);
-        assertEquals("/one\n/two\n", result.out);
+        assertEquals("/one" + Nl + "/two" + Nl, result.out);
     }
 
     @Test
     void cleansWithTheRequestedSafelist() throws Exception {
         Result result = run("<p>Hello <script>alert(1)</script><b>world</b></p>", "clean", "--safelist", "none");
         assertEquals(0, result.status);
-        assertEquals("Hello  world\n", result.out);
+        assertEquals("Hello  world" + Nl, result.out);
     }
 
     @Test
@@ -37,7 +39,7 @@ class MainTest {
         Result result = run("<p>Text</p>", "select", "p", "--text", "--html");
         assertEquals(2, result.status);
         assertEquals("", result.out);
-        assertEquals("jsoup: --html cannot be combined with another output option\nTry 'jsoup --help' for usage.\n", result.err);
+        assertEquals("jsoup: --html cannot be combined with another output option" + Nl + "Try 'jsoup --help' for usage." + Nl, result.err);
     }
 
     private static Result run(String input, String... args) throws Exception {
